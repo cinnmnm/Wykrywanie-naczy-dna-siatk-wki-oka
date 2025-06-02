@@ -26,14 +26,12 @@ class PatchFeatureExtractor:
                     labels.append(label)
         return np.array(patches), np.array(labels)
     
-    def extract_features(self, patches: np.ndarray, labels: np.ndarray) -> np.ndarray:
-        # patches: n x h x w x c, labels: n
-        color_vars = self.color_variance(patches)  # n x c
-        central_moms = self.central_moments(patches)  # n x 3
-        hu_moms = self.hu_moments(patches)  # n x 7
+    def extract_features(self, patch):
+        color_vars = self.color_variance(patch)   # c
+        #central_moms = self.central_moments(patch)   # 3
+        #hu_moms = self.hu_moments(patch)             # 7
 
-        # Concatenate all features and labels column-wise
-        features = np.concatenate([color_vars, central_moms, hu_moms], axis=1)
+        features = np.concatenate([color_vars])
         return features
     
     # nie działa dla extract_features
@@ -48,40 +46,29 @@ class PatchFeatureExtractor:
                 row = flat_patch.tolist() + [label]
                 writer.writerow(row)
 
-    def color_variance(self, patches: np.ndarray) -> np.ndarray:
-        # patches: n x h x w x c
-        # Output: n x c (variance for each channel per patch)
-        if patches.ndim != 4:
-            print("patches should be of shape: n x h x w x c")
+    def color_variance(self, patch: np.ndarray) -> np.ndarray:
+        # patch: h x w x c
+        # Output: c (variance for each channel)
+        if patch.ndim != 3:
+            print("patch should be of shape: h x w x c")
             return
-        return np.var(patches, axis=(1, 2))
+        return np.var(patch, axis=(0, 1))
 
-    def central_moments(self, patches: np.ndarray) -> np.ndarray:
-        # patches: n x h x w x c or n x h x w
-        # Output: n x 3 (for each patch: [m[2,0], m[1,1], m[0,2]])
-        if patches.ndim != 4:
-            print("patches should be of shape: n x h x w x c")
+    def central_moments(self, patch: np.ndarray) -> np.ndarray:
+        # patch: h x w x c
+        # Output: 3 values [m[2,0], m[1,1], m[0,2]]
+        if patch.ndim != 3:
+            print("patch should be of shape: h x w x c")
             return
-        
-        n = patches.shape[0]
-        results = []
-        for i in range(n):
-            patch = patches[i]
-            gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
-            m = moments_central(gray)
-            results.append([m[2,0], m[1,1], m[0,2]])
-        return np.array(results)
+        gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
+        m = moments_central(gray)
+        return np.array([m[2, 0], m[1, 1], m[0, 2]])
 
-    def hu_moments(self, patches: np.ndarray) -> np.ndarray:
-        # patches: n x h x w x c
-        if patches.ndim != 4:
-            raise ValueError("Input must be 4D (n x h x w x c)")
-        n = patches.shape[0]
-        results = []
-        for i in range(n):
-            patch = patches[i]
-            gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
-            m = cv2.moments(gray)
-            hu = cv2.HuMoments(m).flatten()
-            results.append(hu)
-        return np.array(results)
+    def hu_moments(self, patch: np.ndarray) -> np.ndarray:
+        # patch: h x w x c
+        if patch.ndim != 3:
+            raise ValueError("Input must be 3D (h x w x c)")
+        gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
+        m = cv2.moments(gray)
+        hu = cv2.HuMoments(m).flatten()
+        return hu

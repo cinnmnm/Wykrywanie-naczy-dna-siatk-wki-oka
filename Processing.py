@@ -1,4 +1,5 @@
 from skimage.filters import frangi
+import numpy as np
 
 class FrangiFilter2D:
     @staticmethod
@@ -17,7 +18,6 @@ class FrangiFilter2D:
         """
         return frangi(
             image,
-            scale_range=scale_range,
-            scale_step=scale_step,
+            sigmas= np.arange(scale_range[0], scale_range[1], scale_step),
             beta=beta
         )
