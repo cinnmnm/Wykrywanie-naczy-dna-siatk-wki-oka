@@ -28,10 +28,10 @@ class PatchFeatureExtractor:
     
     def extract_features(self, patch):
         color_vars = self.color_variance(patch)   # c
-        #central_moms = self.central_moments(patch)   # 3
-        #hu_moms = self.hu_moments(patch)             # 7
+        central_moms = self.central_moments(patch)   # 3
+        hu_moms = self.hu_moments(patch)             # 7
 
-        features = np.concatenate([color_vars])
+        features = np.concatenate([color_vars, central_moms, hu_moms])
         return features
     
     # nie działa dla extract_features
@@ -56,19 +56,34 @@ class PatchFeatureExtractor:
 
     def central_moments(self, patch: np.ndarray) -> np.ndarray:
         # patch: h x w x c
-        # Output: 3 values [m[2,0], m[1,1], m[0,2]]
+        # Output: 3 values for each channel + 3 for gray: [m[2,0], m[1,1], m[0,2]] * (c+1)
         if patch.ndim != 3:
             print("patch should be of shape: h x w x c")
             return
+        features = []
+        # For each color channel
+        for c in range(patch.shape[2]):
+            m = moments_central(patch[..., c])
+            features.extend([m[2, 0], m[1, 1], m[0, 2]])
+        # For grayscale
         gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
-        m = moments_central(gray)
-        return np.array([m[2, 0], m[1, 1], m[0, 2]])
+        m_gray = moments_central(gray)
+        features.extend([m_gray[2, 0], m_gray[1, 1], m_gray[0, 2]])
+        return np.array(features)
 
     def hu_moments(self, patch: np.ndarray) -> np.ndarray:
         # patch: h x w x c
         if patch.ndim != 3:
             raise ValueError("Input must be 3D (h x w x c)")
+        features = []
+        # For each color channel
+        for c in range(patch.shape[2]):
+            m = cv2.moments(patch[..., c])
+            hu = cv2.HuMoments(m).flatten()
+            features.extend(hu)
+        # For grayscale
         gray = cv2.cvtColor(patch, cv2.COLOR_BGR2GRAY)
-        m = cv2.moments(gray)
-        hu = cv2.HuMoments(m).flatten()
-        return hu
+        m_gray = cv2.moments(gray)
+        hu_gray = cv2.HuMoments(m_gray).flatten()
+        features.extend(hu_gray)
+        return np.array(features)
