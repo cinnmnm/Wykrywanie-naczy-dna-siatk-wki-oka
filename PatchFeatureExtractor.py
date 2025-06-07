@@ -2,29 +2,70 @@ import numpy as np
 import cv2
 import csv
 from skimage.measure import moments_central
+from scipy.ndimage import convolve
 
 class PatchFeatureExtractor:
     # piksele w wycinku są cechami - 5 x 5 x 3 cech
-    def extract_patches(self, images: list, truths: list, fovs: list, patch_size: int = 5) -> tuple[np.ndarray, np.array]:
-        if len(images) != len(truths) or len(images) != len(fovs):
-            return np.array([]), np.array([])
+    def extract_patches(self, images: list, labels: list, masks: list, patch_size: int = 27, patches_per_class: int = 10000) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Extracts a balanced number of patches from each class (1 and 0) per image.
+        Returns arrays of patches and their corresponding labels.
+        """
 
-        h, w = images[0].shape[:2]
         patches = []
-        labels = []
-        for img, truth, fov in zip(images, truths, fovs):
-            for y in range(0, h - patch_size + 1):
-                for x in range(0, w - patch_size + 1):
-                    patch_mask = fov[y:y+patch_size, x:x+patch_size]
-                    if np.any(patch_mask[...,0] == 0):
-                        continue
-                    patch = img[y:y+patch_size, x:x+patch_size, :]
-                    patches.append(patch)
-                    center_y = y + patch_size // 2
-                    center_x = x + patch_size // 2
-                    label = truth[center_y, center_x]
-                    labels.append(label)
-        return np.array(patches), np.array(labels)
+        patch_labels = []
+
+        half_patch = patch_size // 2
+        kernel = np.ones((patch_size, patch_size), dtype=np.uint8)
+
+        class_patches_per_img = patches_per_class // (len(images) * 2);
+
+        for img, label, mask in zip(images, labels, masks):
+            positive_idx = []
+            negative_idx = []
+
+            # Convert mask to single channel if needed
+            if mask.ndim == 3 and mask.shape[2] > 1:
+                mask_gray = (mask[..., 0] > 0).astype(np.uint8)
+            else:
+                mask_gray = (mask > 0).astype(np.uint8)
+
+            valid_mask = convolve(mask_gray, kernel, mode='constant', cval=0)
+            valid_mask = valid_mask == (patch_size * patch_size)
+
+            print("Number of valid patch centers:", np.sum(valid_mask))
+
+            # Ensure label is at least 2D
+            if label.ndim == 1:
+                raise ValueError("Label array must be at least 2D")
+            for y in range(half_patch, label.shape[0] - half_patch):
+                for x in range(half_patch, label.shape[1] - half_patch):
+                    if valid_mask[y, x]:
+                        if label[y, x] == 1:
+                            positive_idx.append((y, x))
+                        elif label[y, x] == 0:
+                            negative_idx.append((y, x))
+
+            np.random.shuffle(positive_idx)
+            np.random.shuffle(negative_idx)
+
+            num_pos = min(len(positive_idx), class_patches_per_img)
+            num_neg = min(len(negative_idx), class_patches_per_img)
+
+            selected_pos = positive_idx[:num_pos]
+            selected_neg = negative_idx[:num_neg]
+
+            for y, x in selected_pos:
+                patch = img[y - half_patch:y + half_patch + 1, x - half_patch:x + half_patch + 1]
+                patches.append(patch)
+                patch_labels.append(1)
+
+            for y, x in selected_neg:
+                patch = img[y - half_patch:y + half_patch + 1, x - half_patch:x + half_patch + 1]
+                patches.append(patch)
+                patch_labels.append(0)
+
+        return np.array(patches), np.array(patch_labels)
     
     def extract_features(self, patch):
         color_vars = self.color_variance(patch)   # c
