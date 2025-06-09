@@ -1,0 +1,16 @@
+# DLPatch/config.yaml
+# Main configuration for patch-based vessel segmentation
+
+device: "cuda"
+model_load_path: "DLPatch/SavedModels/model_final.pth"
+patch_indices_file: "patch_indices_labels.npy"
+resize_shape: [512, 512]
+image_dir: "images/"
+n: 27
+total_patches: 100000
+seed: 42
+class_weights: [1.0, 1.0]
+batch_size: 256
+num_epochs: 25
+early_stopping_patience: 5
+train_val_test_split: [0.8, 0.1, 0.1]

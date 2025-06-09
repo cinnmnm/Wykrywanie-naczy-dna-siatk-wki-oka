@@ -1,3 +1,9 @@
 TODO
 Liskowski,\ Krawiec\ -\ 2016\ -\ Segmenting\ Retinal\ Blood\ Vessels\ with\ Deep\ Neural\ Networks.pdf
 raw_patches_0.csv
+.venv
+__pycache__
+patch_indices_labels.npy
+patch_indices_labels_0.npy
+images2
+.vscode
