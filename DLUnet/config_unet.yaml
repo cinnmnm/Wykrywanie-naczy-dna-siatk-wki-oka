@@ -1,0 +1,76 @@
+# DLUnet/config_unet.yaml
+# Configuration for U-Net Retinal Vessel Segmentation Pipeline
+
+# Data Configuration
+image_dir: "../images/"
+resize_shape: [1024, 1024]
+target_size: [1024, 1024] # Target size for model input
+
+# Model Configuration
+model:
+  in_channels: 3
+  num_classes: 2
+  base_features: 32
+
+# Training Configuration
+training:
+  num_epochs: 30
+  batch_size: 4
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  early_stopping_patience: 5
+
+# Data Splitting
+data_split:
+  train: 0.7
+  validation: 0.15
+  test: 0.15
+  seed: 42
+
+# Class Weights (background, vessel)
+class_weights: [1.0, 3.0] # Higher weight for vessel class due to imbalance
+
+# Loss Configuration
+loss:
+  type: "weighted_focal"
+  focal_alpha: 1.0
+  focal_gamma: 2.0
+
+# Device Configuration
+device: "cuda" # "cuda" or "cpu"
+num_workers: 0 # Number of dataloader workers
+
+# Paths
+model_save_path: "DLUnet/SavedModels/unet_best.pth"
+results_dir: "DLUnet/Results/"
+
+# Evaluation
+evaluation:
+  metrics: ["accuracy", "iou", "f1", "precision", "recall"]
+  save_predictions: true
+  visualization: true
+
+# Preprocessing
+preprocessing:
+  global_contrast_normalization: true # Apply global contrast normalization to entire images
+  normalize: true
+  normalization_mean: [0.485, 0.456, 0.406]
+  normalization_std: [0.229, 0.224, 0.225]
+
+# Augmentation (for training)
+augmentation:
+  horizontal_flip: 0.5
+  vertical_flip: 0.5
+  rotation_degrees: 10
+  brightness: 0.1
+  contrast: 0.1
+
+# Inference
+inference:
+  threshold: 0.5
+  output_format: ["probability", "binary"] # Save both probability maps and binary masks
+
+# Logging
+logging:
+  print_frequency: 10 # Print training progress every N batches
+  save_frequency: 5 # Save model every N epochs

@@ -4,11 +4,11 @@ import os
 
 class DatasetSupplier:
     @staticmethod
-    def get_dataset():
+    def get_dataset(config_path='config.yaml'):
         """
         Returns a dataset based on the provided dataset name.
         """
-        config = Config.load('config.yaml')
+        config = Config.load(config_path)
         image_dir = config["image_dir"]
         images_path = os.path.join(image_dir, "pictures")
         manual_path = os.path.join(image_dir, "manual")
