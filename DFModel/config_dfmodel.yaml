@@ -1,0 +1,113 @@
+# DFModel/config_dfmodel.yaml
+# Configuration for Decision Forest-based Retinal Vessel Classification
+
+# Data Configuration
+image_dir: "../images/"
+resize_shape: [1024, 1024]
+target_size: [1024, 1024] # Target size for model input
+
+# Patch Configuration
+patch:
+  size: 27 # n x n patch size
+  strategy: "balanced" # "random" or "balanced"
+  samples_per_image: 1000 # Number of patches to extract per image
+  positive_ratio: 0.5 # Ratio of positive patches when using balanced strategy
+  overlap_threshold: 0.8 # Minimum overlap with mask for valid patches
+
+# Feature Configuration
+features:
+  use_pixel_features: true # Raw pixel values as features
+  use_color_variance: true # Color variance features
+  use_central_moments: true # Central moments features
+  use_hu_moments: true # Hu moments features
+  use_texture_features: false # Texture features (LBP)
+  use_gradient_features: false # Gradient-based features
+
+# Model Configuration
+model:
+  n_estimators: 100 # Number of trees in the forest
+  max_depth: null # Maximum depth of trees (null = no limit)
+  min_samples_split: 2 # Minimum samples required to split
+  min_samples_leaf: 1 # Minimum samples required at leaf
+  max_features: "sqrt" # Number of features to consider at each split
+  bootstrap: true # Whether to use bootstrap samples
+  class_weight: "balanced" # Handle class imbalance
+  n_jobs: -1 # Number of cores to use (-1 = all)
+  random_state: 42 # Random seed
+  verbose: 0 # Verbosity level
+
+# Training Configuration
+training:
+  num_epochs: 50 # Not used for RF, kept for compatibility
+  batch_size: 128 # Feature extraction batch size
+  learning_rate: 0.001 # Not used for RF, kept for compatibility
+  weight_decay: 0.0001 # Not used for RF, kept for compatibility
+  early_stopping_patience: 10 # Not used for RF, kept for compatibility
+  validation_split: 0.2 # Not used for RF, kept for compatibility
+
+# Data Splitting
+data_split:
+  train: 0.7
+  validation: 0.15
+  test: 0.15
+  seed: 42
+
+# Class Weights (background, vessel)
+class_weights: [1.0, 2.0] # Higher weight for vessel class due to imbalance
+
+# Loss Configuration (not used for RF, kept for compatibility)
+loss:
+  type: "weighted_cross_entropy" # "cross_entropy", "weighted_cross_entropy", "focal"
+  focal_alpha: 1.0
+  focal_gamma: 2.0
+
+# Device Configuration (not applicable to RF, kept for compatibility)
+device: "cuda" # "cuda" or "cpu"
+num_workers: 4 # Number of dataloader workers
+
+# Paths
+model_save_path: "SavedModels/dfmodel_best.pkl"
+results_dir: "Results/"
+patch_cache_dir: "Cache/"
+
+# Preprocessing
+preprocessing:
+  global_contrast_normalization: true
+  normalize: true
+  augmentation: false # Not typically used with RF
+
+# Augmentation (not typically used with RF, kept for compatibility)
+augmentation:
+  rotation: 15 # degrees
+  flip_horizontal: true
+  flip_vertical: true
+  brightness: 0.1
+  contrast: 0.1
+
+# Inference Configuration
+inference:
+  stride: 1 # Sliding window stride for inference
+  batch_size: 1000 # Batch size for feature extraction during inference
+  postprocessing:
+    min_area: 50 # Minimum area for connected components
+    morphology_kernel_size: 3 # Size of morphological operations kernel
+
+# Evaluation
+evaluation:
+  metrics: ["accuracy", "f1", "precision", "recall", "auc"]
+  save_predictions: true
+  visualization: true
+  confusion_matrix: true
+  cross_validation_folds: 5
+
+# Hyperparameter Tuning
+hyperparameter_tuning:
+  enabled: false # Whether to perform grid search
+  param_grid:
+    n_estimators: [50, 100, 200]
+    max_depth: [null, 10, 20, 30]
+    min_samples_split: [2, 5, 10]
+    min_samples_leaf: [1, 2, 4]
+    max_features: ["sqrt", "log2", null]
+  cv_folds: 5
+  scoring: "f1"
