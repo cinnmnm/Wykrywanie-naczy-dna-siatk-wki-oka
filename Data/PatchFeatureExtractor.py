@@ -6,7 +6,7 @@ from scipy.ndimage import convolve
 
 class PatchFeatureExtractor:
     # piksele w wycinku są cechami - 5 x 5 x 3 cech
-    def extract_patches(self, images: list, labels: list, masks: list, patch_size: int = 27, patches_per_class: int = 10000) -> tuple[np.ndarray, np.ndarray]:
+    def extract_patches(self, images: list, labels: list, masks: list, patch_size: int = 27, patches_per_class: int = 10000, all_patches: bool = False) -> tuple[np.ndarray, np.ndarray]:
         """
         Extracts a balanced number of patches from each class (1 and 0) per image.
         Returns arrays of patches and their corresponding labels.
@@ -41,16 +41,20 @@ class PatchFeatureExtractor:
             for y in range(half_patch, label.shape[0] - half_patch):
                 for x in range(half_patch, label.shape[1] - half_patch):
                     if valid_mask[y, x]:
-                        if label[y, x] == 1:
+                        if label[y, x] == 1 or label[y, x] == 255:
                             positive_idx.append((y, x))
                         elif label[y, x] == 0:
                             negative_idx.append((y, x))
 
             np.random.shuffle(positive_idx)
             np.random.shuffle(negative_idx)
-
-            num_pos = min(len(positive_idx), class_patches_per_img)
-            num_neg = min(len(negative_idx), class_patches_per_img)
+            
+            num_pos = class_patches_per_img
+            num_neg = class_patches_per_img
+            
+            if not all_patches:
+                num_pos = min(len(positive_idx), num_pos)
+                num_neg = min(len(negative_idx), num_neg)
 
             selected_pos = positive_idx[:num_pos]
             selected_neg = negative_idx[:num_neg]
