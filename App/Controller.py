@@ -57,14 +57,14 @@ class Controller:
         test_dataset = VesselSegmentationDataset(
             data_tuples,
             image_transform=None,  # Use default transform (to tensor, normalization)
-            target_size=tuple(config['resize_shape']),
+            target_size=tuple(config['target_size']),
             global_contrast_normalization=config.get('preprocessing', {}).get('global_contrast_normalization', False)
         )
 
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
         inference_engine = VesselSegmentationInference(
-            model_path='SavedModels/demo_model_sota.pth',
+            model_path='DLUnet/SavedModels/demo_model_sota.pth',
             config_path='DLUnet/config_unet.yaml',
             device=config.get('device', None)
         )

@@ -172,14 +172,14 @@ class VesselSegmentationTrainer:
         """Create training transforms with preprocessing and augmentation"""
         return T.Compose([
             T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            #T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
     
     def _create_val_transforms(self):
         """Create validation/test transforms (no augmentation)"""
         return T.Compose([
             T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            #T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
     
     def initialize_model(self, 
@@ -214,6 +214,7 @@ class VesselSegmentationTrainer:
         
         # Initialize loss function with class weights
         loss_type = self.config.get('loss_type', 'focal')
+        print(f"Using loss type: {loss_type}")
         class_weights = self.config.get('class_weights', [1.0, 1.0])
         
         if isinstance(class_weights, list):
@@ -361,12 +362,13 @@ class VesselSegmentationTrainer:
                 total_loss += loss.item()
                 num_batches += 1
         
-        # Calculate metrics
+        # Calculate metrics for class 1 (vessels) only
         all_predictions = np.concatenate(all_predictions)
         all_labels = np.concatenate(all_labels)
-        
-        iou = float(jaccard_score(all_labels, all_predictions))
-        f1 = float(f1_score(all_labels, all_predictions))
+
+        # Only consider class 1 (vessels) for IoU and F1
+        iou = float(jaccard_score(all_labels, all_predictions, pos_label=1, average='binary'))
+        f1 = float(f1_score(all_labels, all_predictions, pos_label=1, average='binary'))
         precision = float(precision_score(all_labels, all_predictions))
         recall = float(recall_score(all_labels, all_predictions))
         

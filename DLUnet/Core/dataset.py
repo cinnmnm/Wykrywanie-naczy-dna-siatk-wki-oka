@@ -122,7 +122,9 @@ class VesselSegmentationDataset(Dataset):
             GCN processed PIL Image
         """
         image_np = np.array(image)
-        image_gcn = ImagePreprocessing.global_contrast_normalization(image_np)
+        image_gcn = ImagePreprocessing.apply_clahe(image_np)
+        image_gcn = ImagePreprocessing.median_filter(image_gcn)
+        image_gcn = ImagePreprocessing.normalize(image_gcn)
         
         # Rescale to 0-255 range for consistent processing
         min_val, max_val = image_gcn.min(), image_gcn.max()

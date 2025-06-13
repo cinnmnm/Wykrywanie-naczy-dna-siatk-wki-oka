@@ -2,9 +2,9 @@
 # Configuration for U-Net Retinal Vessel Segmentation Pipeline
 
 # Data Configuration
-image_dir: "../images/"
+image_dir: "images/"
 resize_shape: [1024, 1024]
-target_size: [1024, 1024] # Target size for model input
+target_size: [512, 512] # Target size for model input
 
 # Model Configuration
 model:
@@ -28,11 +28,12 @@ data_split:
   seed: 42
 
 # Class Weights (background, vessel)
-class_weights: [1.0, 3.0] # Higher weight for vessel class due to imbalance
+class_weights: [0.1, 0.9] # Highr weight for vessel class due to imbalancee
 
 # Loss Configuration
+loss_type: "combined"
 loss:
-  type: "weighted_focal"
+  type: "combined"
   focal_alpha: 1.0
   focal_gamma: 2.0
 

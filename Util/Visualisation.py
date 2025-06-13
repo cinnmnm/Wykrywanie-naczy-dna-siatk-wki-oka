@@ -15,7 +15,7 @@ class Visualisation:
         :return: A difference map as a numpy array.
         """
         if reference.shape != predicted.shape:
-            raise ValueError("Reference and predicted images must have the same shape.")
+            raise ValueError(f"Reference and predicted images must have the same shape. Got {reference.shape} and {predicted.shape}.")
         
         if reference.ndim != 2:
             raise ValueError("Reference and predicted images must be 2D arrays.")
