@@ -5,15 +5,15 @@ from skimage.measure import moments_central
 from scipy.ndimage import convolve
 
 class PatchFeatureExtractor:
-    # piksele w wycinku są cechami - 5 x 5 x 3 cech
     def extract_patches(self, images: list, labels: list, masks: list, patch_size: int = 27, patches_per_class: int = 10000, all_patches: bool = False) -> tuple[np.ndarray, np.ndarray]:
         """
-        Extracts a balanced number of patches from each class (1 and 0) per image.
+        Extracts a balanced number of patches from each class (1 and 0) per image or all valid patches.
         Returns arrays of patches and their corresponding labels.
         """
 
         patches = []
         patch_labels = []
+        patch_coords = []
 
         half_patch = patch_size // 2
         kernel = np.ones((patch_size, patch_size), dtype=np.uint8)
@@ -33,7 +33,7 @@ class PatchFeatureExtractor:
             valid_mask = convolve(mask_gray, kernel, mode='constant', cval=0)
             valid_mask = valid_mask == (patch_size * patch_size)
 
-            print("Number of valid patch centers:", np.sum(valid_mask))
+            #print("Number of valid patch centers:", np.sum(valid_mask))
 
             # Ensure label is at least 2D
             if label.ndim == 1:
@@ -62,13 +62,17 @@ class PatchFeatureExtractor:
             for y, x in selected_pos:
                 patch = img[y - half_patch:y + half_patch + 1, x - half_patch:x + half_patch + 1]
                 patches.append(patch)
+                patch_coords.append((y,x))
                 patch_labels.append(1)
 
             for y, x in selected_neg:
                 patch = img[y - half_patch:y + half_patch + 1, x - half_patch:x + half_patch + 1]
                 patches.append(patch)
+                patch_coords.append((y,x))
                 patch_labels.append(0)
 
+        if all_patches:
+            return np.array(patches), np.array(patch_labels), patch_coords
         return np.array(patches), np.array(patch_labels)
     
     def extract_features(self, patch):

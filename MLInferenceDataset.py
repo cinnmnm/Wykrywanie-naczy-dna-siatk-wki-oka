@@ -10,10 +10,9 @@ class MLInferenceDataset(Dataset):
     def __init__(self, image_path):
         self.image_path = image_path
         dataset = DatasetSupplier.get_dataset()
-        tuple =  next((item for item in dataset if item[1] == image_path), None)
+        tuple =  next((item for item in dataset if item[1].lower() == image_path.lower()), None)
         if tuple is None:
-            Exception(f"wrong image path (?)")
-            return
+            raise Exception(f"wrong image path: {image_path}")
         _, image_path, manual_path, mask_path = tuple
         images_list = ImageLoader.load_images([image_path], BGRtoRGB=True)
         manual_list = ImageLoader.load_images([manual_path])
@@ -30,7 +29,7 @@ class MLInferenceDataset(Dataset):
         mask_resized = ImagePreprocessing.resize_and_normalize(mask)
 
         pfe = PatchFeatureExtractor()
-        patches, lables = pfe.extract_patches([image_resized], [manual_resized], [mask_resized], patch_size=5, all_patches=True)
+        patches, lables, coords = pfe.extract_patches([image_resized], [manual_resized], [mask_resized], patch_size=5, all_patches=True)
 
         features = np.stack([pfe.extract_features(patch) for patch in patches])
         
@@ -39,6 +38,7 @@ class MLInferenceDataset(Dataset):
 
         self.X = scaled_features
         self.Y = lables
+        self.coords = coords
 
     def preprocessing(self, image):
         clahe = ImagePreprocessing.apply_clahe(image)
@@ -50,4 +50,4 @@ class MLInferenceDataset(Dataset):
         return len(self.X)
     
     def __getitem__(self, idx):
-        return self.X[idx], self.Y[idx]
+        return self.X[idx], self.Y[idx], self.coords[idx]

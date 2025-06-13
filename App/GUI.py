@@ -132,15 +132,17 @@ class GUI:
 
             # Collect results from all selected models
             results = []
+
             try:
                 if self.prosty_model.value:
                     result = self.controller.run_filter(img_cv)
                     results.append(('Filtrowanie', result))
                 if self.ml_model.value:
-                    result = self.controller.run_ml(img_cv)
+                    print("Running Random Forest Model...")
+                    result = self.controller.run_ml(image_path)
                     results.append(('ML Model', result))
                 if self.dl_model.value:
-                    result = self.controller.run_dl(img_cv)
+                    result = self.controller.run_dl(image_path)
                     results.append(('DL Model', result))
                 if not results:
                     print("No model selected.")
